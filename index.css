@@ -46,6 +46,11 @@ body {
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
+.youtube-button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
 .poker-button {
   position: absolute;
   top: 64px;
@@ -64,10 +69,6 @@ body {
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.youtube-button:hover {
-  transform: scale(1.05);
-  opacity: 0.9;
-}
 .poker-button:hover {
   transform: scale(1.05);
   opacity: 0.9;
