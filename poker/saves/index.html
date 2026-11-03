@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker Chip Distribution Calculator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f0320;
+      color: #e0e6ed;
+    }
+    .chip {
+      box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.25), 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1c2541;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3a506b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #5bc0be;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+  <!-- Main Header -->
+  <header class="border-b border-slate-700 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-emerald-600 rounded-lg text-white">
+          <i data-lucide="coins" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-wide">Poker Chip Manager</h1>
+          <p class="text-xs text-slate-400">Session Balance & Distribution System</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button id="btn-inventory-modal" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-md text-xs font-semibold text-slate-200 transition flex items-center gap-1.5">
+          <i data-lucide="box" class="w-4 h-4"></i>
+          <span>Bank Inventory</span>
+        </button>
+        <button id="btn-reset-session" class="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-700/50 rounded-md text-xs font-semibold text-rose-300 transition flex items-center gap-1.5">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+          <span>Reset Session</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- Left Column: Controls & Player List -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- General Settings / Buy-in Defaults -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <h2 class="text-md font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4"></i>
+          Session Default Settings
+        </h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Default Buy-in / Starting Bid ($)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+              <input type="number" id="input-default-buyin" value="50" min="1" step="1"
+                class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Target Stack Mode</label>
+            <select id="select-stack-mode" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+              <option value="combine">Previous Balance + Buy-in</option>
+              <option value="buyin_only">Buy-in Only</option>
+              <option value="balance_only">Previous Balance Only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add New Player Form -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <h2 class="text-md font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          Add Player to Session
+        </h2>
+        <form id="form-add-player" class="space-y-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Player Nickname *</label>
+            <input type="text" id="input-player-name" placeholder="e.g. Maverick, Cash, PokerPro" required
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Previous Session Balance ($)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+                <input type="number" id="input-player-prev-balance" value="0" min="0" step="1"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Buy-In / Starting Bid ($)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+                <input type="number" id="input-player-buyin" value="50" min="0" step="1"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 transition">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-lg transition flex items-center justify-center gap-2 text-sm">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            Add Player
+          </button>
+        </form>
+      </div>
+
+      <!-- Quick Summary Cards -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-400 uppercase tracking-wider">Total Active Players</p>
+          <p id="stat-total-players" class="text-2xl font-bold text-white mt-1">0</p>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-400 uppercase tracking-wider">Total Value Distributed</p>
+          <p id="stat-total-value" class="text-2xl font-bold text-emerald-400 mt-1">$0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Player Distributions -->
+    <div class="lg:col-span-7 space-y-6">
+      
+      <!-- Action Toolbar -->
+      <div class="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-xl px-5 py-3">
+        <h2 class="text-md font-semibold text-white flex items-center gap-2">
+          <i data-lucide="layers" class="w-5 h-5 text-emerald-400"></i>
+          Player Chip Breakdowns
+        </h2>
+        <div class="flex items-center gap-2">
+          <button id="btn-print" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-md text-xs font-semibold text-slate-200 transition flex items-center gap-1.5">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Print List</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Player Breakdown Cards Container -->
+      <div id="player-cards-container" class="space-y-4">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Inventory Modal -->
+  <div id="modal-inventory" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="box" class="w-5 h-5 text-emerald-400"></i>
+          Chip Bank Inventory Limits
+        </h3>
+        <button id="btn-close-inventory" class="text-slate-400 hover:text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400">Set maximum available chips in your physical set to ensure you don't over-allocate.</p>
+
+      <div class="space-y-3">
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-white text-slate-900 border border-slate-400 flex items-center justify-center text-xs font-bold shadow-sm">$1</span>
+            <span class="text-sm font-medium text-slate-200">Whites ($1)</span>
+          </div>
+          <input type="number" id="limit-1" value="200" min="0" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-right text-white">
+        </div>
+        
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">$5</span>
+            <span class="text-sm font-medium text-slate-200">Reds ($5)</span>
+          </div>
+          <input type="number" id="limit-5" value="200" min="0" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-right text-white">
+        </div>
+
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">$10</span>
+            <span class="text-sm font-medium text-slate-200">Blues ($10)</span>
+          </div>
+          <input type="number" id="limit-10" value="150" min="0" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-right text-white">
+        </div>
+
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">$25</span>
+            <span class="text-sm font-medium text-slate-200">Greens ($25)</span>
+          </div>
+          <input type="number" id="limit-25" value="100" min="0" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-right text-white">
+        </div>
+
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-lg border border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="w-7 h-7 rounded-full bg-black text-white border border-slate-600 flex items-center justify-center text-xs font-bold shadow-sm">$100</span>
+            <span class="text-sm font-medium text-slate-200">Blacks ($100)</span>
+          </div>
+          <input type="number" id="limit-100" value="50" min="0" class="w-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-right text-white">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btn-save-inventory" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-lg transition text-sm">
+          Save Inventory Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg bg-slate-800 border border-slate-700 text-slate-100 text-sm hidden transition-all duration-300">
+    <span id="toast-message">Notification</span>
+  </div>
+
+  <!-- Printable Area -->
+  <div id="print-area" class="hidden"></div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    Poker Chip Distribution Calculator &copy; 2026. Self-contained system for home games and leagues.
+  </footer>
+
+  <script>
+    // State initialization
+    let players = JSON.parse(localStorage.getItem('poker_players')) || [];
+    let defaultBuyIn = parseFloat(localStorage.getItem('poker_default_buyin')) || 50;
+    let stackMode = localStorage.getItem('poker_stack_mode') || 'combine';
+    let inventory = JSON.parse(localStorage.getItem('poker_inventory')) || {
+      1: 100,
+      5: 70,
+      10: 70,
+      25: 70,
+      100: 50
+    };
+
+    // DOM Elements
+    const formAddPlayer = document.getElementById('form-add-player');
+    const inputPlayerName = document.getElementById('input-player-name');
+    const inputPlayerPrevBalance = document.getElementById('input-player-prev-balance');
+    const inputPlayerBuyin = document.getElementById('input-player-buyin');
+    const inputDefaultBuyin = document.getElementById('input-default-buyin');
+    const selectStackMode = document.getElementById('select-stack-mode');
+    const playerCardsContainer = document.getElementById('player-cards-container');
+    const statTotalPlayers = document.getElementById('stat-total-players');
+    const statTotalValue = document.getElementById('stat-total-value');
+    const btnResetSession = document.getElementById('btn-reset-session');
+    const btnPrint = document.getElementById('btn-print');
+    const btnInventoryModal = document.getElementById('btn-inventory-modal');
+    const modalInventory = document.getElementById('modal-inventory');
+    const btnCloseInventory = document.getElementById('btn-close-inventory');
+    const btnSaveInventory = document.getElementById('btn-save-inventory');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+
+    // Sync UI with state
+    inputDefaultBuyin.value = defaultBuyIn;
+    selectStackMode.value = stackMode;
+    document.getElementById('limit-1').value = inventory[1];
+    document.getElementById('limit-5').value = inventory[5];
+    document.getElementById('limit-10').value = inventory[10];
+    document.getElementById('limit-25').value = inventory[25];
+    document.getElementById('limit-100').value = inventory[100];
+
+    // Helper: Show Toast
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    // Save to LocalStorage
+    function saveState() {
+      localStorage.setItem('poker_players', JSON.stringify(players));
+      localStorage.setItem('poker_default_buyin', defaultBuyIn);
+      localStorage.setItem('poker_stack_mode', stackMode);
+      localStorage.setItem('poker_inventory', JSON.stringify(inventory));
+    }
+
+    // Poker Chip Breakdown Algorithm (Balanced distribution optimal for realistic game play)
+    function calculateChips(targetAmount) {
+      let amount = Math.floor(targetAmount);
+      let breakdown = { 100: 0, 25: 0, 10: 0, 5: 0, 1: 0 };
+      
+      if (amount <= 0) return breakdown;
+
+      // Realistic game breakdown rules to avoid giving all large/small chips
+      // 1. Give reasonable small denomination base for playability (white $1s and red $5s)
+      let remaining = amount;
+
+      // Allocate $100s if amount is large (> $200)
+      if (remaining >= 200) {
+        let count100 = Math.floor((remaining - 100) / 100);
+        breakdown[100] = count100;
+        remaining -= count100 * 100;
+      }
+
+      // Allocate $25s
+      if (remaining >= 50) {
+        let count25 = Math.floor((remaining - 25) / 25);
+        breakdown[25] = count25;
+        remaining -= count25 * 25;
+      }
+
+      // Allocate $10s
+      if (remaining >= 20) {
+        let count10 = Math.floor((remaining - 10) / 10);
+        breakdown[10] = count10;
+        remaining -= count10 * 10;
+      }
+
+      // Allocate $5s
+      if (remaining >= 5) {
+        let count5 = Math.floor(remaining / 5);
+        // Leave some small change in $1s if possible
+        if (count5 > 2 && (remaining % 5 === 0)) {
+          count5 -= 1;
+        }
+        breakdown[5] = count5;
+        remaining -= count5 * 5;
+      }
+
+      // Remaining goes into $1s
+      breakdown[1] = remaining;
+
+      return breakdown;
+    }
+
+    // Get Target Stack Value for player
+    function getPlayerTarget(player) {
+      if (stackMode === 'buyin_only') return player.buyIn;
+      if (stackMode === 'balance_only') return player.prevBalance;
+      return player.prevBalance + player.buyIn;
+    }
+
+    // Render Players
+    function renderPlayers() {
+      playerCardsContainer.innerHTML = '';
+      let totalValue = 0;
+      let aggregatedChips = { 1: 0, 5: 0, 10: 0, 25: 0, 100: 0 };
+
+      if (players.length === 0) {
+        playerCardsContainer.innerHTML = `
+          <div class="bg-slate-900 border border-slate-800/80 rounded-xl p-8 text-center text-slate-500">
+            <i data-lucide="users" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+            <p class="text-sm font-medium">No players added yet.</p>
+            <p class="text-xs mt-1">Add player nicknames and session balances to generate chip distributions.</p>
+          </div>
+        `;
+        statTotalPlayers.textContent = 0;
+        statTotalValue.textContent = '$0';
+        lucide.createIcons();
+        return;
+      }
+
+      players.forEach((player, index) => {
+        const targetStack = getPlayerTarget(player);
+        totalValue += targetStack;
+        const chips = calculateChips(targetStack);
+
+        // Track aggregate usage
+        Object.keys(chips).forEach(val => {
+          aggregatedChips[val] += chips[val];
+        });
+
+        const card = document.createElement('div');
+        card.className = "bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg space-y-4 transition hover:border-slate-700";
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-emerald-950 border border-emerald-500/40 text-emerald-400 font-bold flex items-center justify-center text-base">
+                ${player.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-white">${escapeHtml(player.name)}</h3>
+                <p class="text-xs text-slate-400">
+                  Prev Balance: <span class="text-slate-200 font-medium">$${player.prevBalance}</span> | 
+                  Buy-in: <span class="text-slate-200 font-medium">$${player.buyIn}</span>
+                </p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="text-right">
+                <span class="text-xs text-slate-400 uppercase tracking-wider block">Target Stack</span>
+                <span class="text-xl font-black text-emerald-400">$${targetStack}</span>
+              </div>
+              <button onclick="removePlayer(${index})" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chip Distribution Grid -->
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Chip Distribution Stack</span>
+            <div class="grid grid-cols-5 gap-2">
+              
+              <!-- $1 Chips -->
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 text-center">
+                <div class="chip w-7 h-7 mx-auto rounded-full bg-slate-100 text-slate-900 font-bold flex items-center justify-center text-xs mb-1.5 border border-slate-300">
+                  $1
+                </div>
+                <span class="text-lg font-bold text-white block">${chips[1]}</span>
+                <span class="text-[10px] text-slate-500 block">($${chips[1] * 1})</span>
+              </div>
+
+              <!-- $5 Chips -->
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 text-center">
+                <div class="chip w-7 h-7 mx-auto rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-xs mb-1.5">
+                  $5
+                </div>
+                <span class="text-lg font-bold text-white block">${chips[5]}</span>
+                <span class="text-[10px] text-slate-500 block">($${chips[5] * 5})</span>
+              </div>
+
+              <!-- $10 Chips -->
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 text-center">
+                <div class="chip w-7 h-7 mx-auto rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs mb-1.5">
+                  $10
+                </div>
+                <span class="text-lg font-bold text-white block">${chips[10]}</span>
+                <span class="text-[10px] text-slate-500 block">($${chips[10] * 10})</span>
+              </div>
+
+              <!-- $25 Chips -->
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 text-center">
+                <div class="chip w-7 h-7 mx-auto rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-xs mb-1.5">
+                  $25
+                </div>
+                <span class="text-lg font-bold text-white block">${chips[25]}</span>
+                <span class="text-[10px] text-slate-500 block">($${chips[25] * 25})</span>
+              </div>
+
+              <!-- $100 Chips -->
+              <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80 text-center">
+                <div class="chip w-7 h-7 mx-auto rounded-full bg-slate-950 border border-slate-600 text-white font-bold flex items-center justify-center text-xs mb-1.5">
+                  $100
+                </div>
+                <span class="text-lg font-bold text-white block">${chips[100]}</span>
+                <span class="text-[10px] text-slate-500 block">($${chips[100] * 100})</span>
+              </div>
+
+            </div>
+          </div>
+        `;
+        playerCardsContainer.appendChild(card);
+      });
+
+      // Update Summary Info
+      statTotalPlayers.textContent = players.length;
+      statTotalValue.textContent = `$${totalValue.toLocaleString()}`;
+
+      // Check for inventory warnings
+      checkInventoryLimits(aggregatedChips);
+
+      lucide.createIcons();
+    }
+
+    // Check inventory warnings
+    function checkInventoryLimits(aggregatedChips) {
+      let warnings = [];
+      Object.keys(aggregatedChips).forEach(denom => {
+        if (aggregatedChips[denom] > inventory[denom]) {
+          warnings.push(`$${denom} chips (Need ${aggregatedChips[denom]}, Max ${inventory[denom]})`);
+        }
+      });
+
+      if (warnings.length > 0) {
+        showToast(`Warning: Exceeded physical bank limit for ${warnings.join(', ')}`);
+      }
+    }
+
+    // Remove Player
+    window.removePlayer = function(index) {
+      players.splice(index, 1);
+      saveState();
+      renderPlayers();
+      showToast("Player removed.");
+    };
+
+    // Helper: Escape HTML
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Event Listeners
+    formAddPlayer.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = inputPlayerName.value.trim();
+      const prevBalance = parseFloat(inputPlayerPrevBalance.value) || 0;
+      const buyIn = parseFloat(inputPlayerBuyin.value) || 0;
+
+      if (!name) return;
+
+      players.push({ name, prevBalance, buyIn });
+      saveState();
+      renderPlayers();
+
+      // Reset Form fields except default buyin
+      inputPlayerName.value = '';
+      inputPlayerPrevBalance.value = '0';
+      inputPlayerBuyin.value = defaultBuyIn;
+      showToast(`Added ${name} to session.`);
+    });
+
+    inputDefaultBuyin.addEventListener('change', (e) => {
+      defaultBuyIn = parseFloat(e.target.value) || 0;
+      inputPlayerBuyin.value = defaultBuyIn;
+      saveState();
+    });
+
+    selectStackMode.addEventListener('change', (e) => {
+      stackMode = e.target.value;
+      saveState();
+      renderPlayers();
+    });
+
+    btnResetSession.addEventListener('click', () => {
+      if (confirm("Are you sure you want to clear all players and reset this session?")) {
+        players = [];
+        saveState();
+        renderPlayers();
+        showToast("Session reset.");
+      }
+    });
+
+    // Inventory Modal Controls
+    btnInventoryModal.addEventListener('click', () => {
+      modalInventory.classList.remove('hidden');
+    });
+
+    btnCloseInventory.addEventListener('click', () => {
+      modalInventory.classList.add('hidden');
+    });
+
+    btnSaveInventory.addEventListener('click', () => {
+      inventory[1] = parseInt(document.getElementById('limit-1').value) || 0;
+      inventory[5] = parseInt(document.getElementById('limit-5').value) || 0;
+      inventory[10] = parseInt(document.getElementById('limit-10').value) || 0;
+      inventory[25] = parseInt(document.getElementById('limit-25').value) || 0;
+      inventory[100] = parseInt(document.getElementById('limit-100').value) || 0;
+
+      saveState();
+      modalInventory.classList.add('hidden');
+      renderPlayers();
+      showToast("Inventory limits updated.");
+    });
+
+    // Print functionality
+    btnPrint.addEventListener('click', () => {
+      if (players.length === 0) {
+        showToast("No players to print.");
+        return;
+      }
+
+      let printWindow = window.open('', '_blank');
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Poker Session Distribution Summary</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            h1 { font-size: 20px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: center; }
+            th { background-color: #f4f4f4; text-align: center; }
+            .name { text-align: left; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1>Poker Session Distribution Sheet</h1>
+          <p><strong>Date:</strong> ${new Date().toLocaleDateString()} | <strong>Total Players:</strong> ${players.length}</p>
+          <table>
+            <thead>
+              <tr>
+                <th class="name">Player</th>
+                <th>Prev Bal ($)</th>
+                <th>Buy-in ($)</th>
+                <th>Total ($)</th>
+                <th>$1 Chips</th>
+                <th>$5 Chips</th>
+                <th>$10 Chips</th>
+                <th>$25 Chips</th>
+                <th>$100 Chips</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      players.forEach(p => {
+        const target = getPlayerTarget(p);
+        const chips = calculateChips(target);
+        html += `
+          <tr>
+            <td class="name">${escapeHtml(p.name)}</td>
+            <td>$${p.prevBalance}</td>
+            <td>$${p.buyIn}</td>
+            <td><strong>$${target}</strong></td>
+            <td>${chips[1]}</td>
+            <td>${chips[5]}</td>
+            <td>${chips[10]}</td>
+            <td>${chips[25]}</td>
+            <td>${chips[100]}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+          <script>
+            window.onload = function() { window.print(); }
+          <\/script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    });
+
+    // Initial render
+    renderPlayers();
+    lucide.createIcons();
+  </script>
+</body>
+</html>
